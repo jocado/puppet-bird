@@ -119,6 +119,15 @@ class bird (
   }
 
   if $manage_conf == true {
+
+    file {
+      $config_dir:
+        ensure => directory,
+        owner   => root,
+        group   => root,
+        mode    => '0755',
+    }
+
     if $config_file_v4 == 'UNSET' and $config_template_v4 == 'UNSET' {
       fail("either config_file_v4 or config_template_v4 parameter must be set (config_file_v4: ${config_file_v4}, config_template_v4: ${config_template_v4})")
     } else {
