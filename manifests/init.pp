@@ -288,7 +288,7 @@ class bird (
               owner   => root,
               group   => root,
               mode    => '0644',
-              notify  => Exec['bird4_config_reload'],
+              notify  => Exec['bird6_config_reload'],
               require => Package[$daemon_name_v6];
           }
         } else {
@@ -299,7 +299,7 @@ class bird (
               owner   => root,
               group   => root,
               mode    => '0644',
-              notify  => Exec['bird4_config_reload'],
+              notify  => Exec['bird6_config_reload'],
               require => Package[$daemon_name_v6];
           }
         } # config_file_v6
