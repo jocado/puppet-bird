@@ -160,6 +160,7 @@ class bird (
     }
 
     # User collector here, as this needs to apply to v6 as well, IF its enabled below #
+    File[$daemon_service_v4]    ~> Exec['bird_systemd_reload']
     Exec['bird_systemd_reload'] -> Service<| tag == 'bird' |>
 
   }
@@ -264,6 +265,8 @@ class bird (
           notify  => Service[$daemon_name_v6],
           require => Package[$daemon_name_v6],
       }
+
+      File[$daemon_service_v6] ~> Exec['bird_systemd_reload']
 
     }
 
