@@ -132,10 +132,8 @@ class bird (
       $daemon_name_v4:
         ensure      => $service_v4_ensure,
         enable      => $service_v4_enable,
-        hasrestart  => false,
-        restart     => '/usr/sbin/birdc configure',
-        hasstatus   => false,
-        pattern     => $daemon_name_v4,
+        hasrestart  => true,
+        hasstatus   => true,
         require     => Package[$daemon_name_v4];
     }
 
@@ -216,7 +214,7 @@ class bird (
             owner   => root,
             group   => root,
             mode    => '0644',
-            notify  => Service[$daemon_name_v4],
+            notify  => Exec['bird4_config_reload'],
             require => Package[$daemon_name_v4];
         }
       } else {
@@ -227,11 +225,16 @@ class bird (
             owner   => root,
             group   => root,
             mode    => '0644',
-            notify  => Service[$daemon_name_v4],
+            notify  => Exec['bird4_config_reload'],
             require => Package[$daemon_name_v4];
         }
       } # config_file_v4
 
+      exec {'bird4_config_reload':
+        command     => '/bin/systemctl reload bird.service',
+        refreshonly => true,
+        tag         => 'bird_config_reload',
+      }
 
     } # config_tmpl_v4
   } # manage_conf
@@ -248,10 +251,8 @@ class bird (
         $daemon_name_v6:
           ensure     => $service_v6_ensure,
           enable     => $service_v6_enable,
-          hasrestart => false,
-          restart    => '/usr/sbin/birdc6 configure',
-          hasstatus  => false,
-          pattern    => $daemon_name_v6,
+          hasrestart  => true,
+          hasstatus   => true,
           require    => Package[$daemon_name_v6];
       }
     }
@@ -278,6 +279,7 @@ class bird (
       if $config_file_v6 == 'UNSET' and $config_template_v6 == 'UNSET' {
         fail("either config_file_v6 or config_template_v6 parameter must be set (config_file_v6: ${config_file_v6}, config_template_v6: ${config_template_v6})")
       } else {
+
         if $config_file_v6 != 'UNSET' {
           file {
             $config_path_v6:
@@ -286,7 +288,7 @@ class bird (
               owner   => root,
               group   => root,
               mode    => '0644',
-              notify  => Service[$daemon_name_v6],
+              notify  => Exec['bird4_config_reload'],
               require => Package[$daemon_name_v6];
           }
         } else {
@@ -297,10 +299,17 @@ class bird (
               owner   => root,
               group   => root,
               mode    => '0644',
-              notify  => Service[$daemon_name_v6],
+              notify  => Exec['bird4_config_reload'],
               require => Package[$daemon_name_v6];
           }
         } # config_file_v6
+
+        exec {'bird6_config_reload':
+          command     => '/bin/systemctl reload bird6.service',
+          refreshonly => true,
+          tag         => 'bird_config_reload',
+        }
+
       } # config_tmpl_v6
     } # manage_conf
   } # enable_v6
