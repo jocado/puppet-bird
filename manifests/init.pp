@@ -182,12 +182,12 @@ class bird (
       $graceful_arg = undef
     }
 
-   # If any deamon args set, concatinate them together #
-   if $graceful_arg {
-     $daemon_args = "${graceful_arg}"
-   } else {
-     $daemon_args = undef
-   }
+    # If any deamon args set, concatinate them together #
+    if $graceful_arg {
+      $daemon_args = "${graceful_arg}"
+    } else {
+      $daemon_args = undef
+    }
 
     # Deamon Config - this is consumed by v4 and v6 #
     file {
@@ -207,6 +207,7 @@ class bird (
     if $config_file_v4 == 'UNSET' and $config_template_v4 == 'UNSET' {
       fail("either config_file_v4 or config_template_v4 parameter must be set (config_file_v4: ${config_file_v4}, config_template_v4: ${config_template_v4})")
     } else {
+
       if $config_file_v4 != 'UNSET' {
         file {
           $config_path_v4:
@@ -230,6 +231,8 @@ class bird (
             require => Package[$daemon_name_v4];
         }
       } # config_file_v4
+
+
     } # config_tmpl_v4
   } # manage_conf
 
