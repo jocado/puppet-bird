@@ -75,30 +75,21 @@
 # See LICENSE file
 #
 class bird (
-  $daemon_name_v4     = $bird::params::daemon_name_v4,
-  $config_file_v4     = 'UNSET',
-  $config_template_v4 = 'UNSET',
-  $enable_v6          = true,
-  $manage_conf        = true,
-  $manage_service     = true,
-  $service_v6_ensure  = 'running',
-  $service_v6_enable  = true,
-  $service_v4_ensure  = 'running',
-  $service_v4_enable  = true,
-  $daemon_name_v6     = $bird::params::daemon_name_v6,
-  $config_file_v6     = 'UNSET',
-  $config_template_v6 = 'UNSET',
+  String                       $daemon_name_v4     = $bird::params::daemon_name_v4,
+  String                       $config_file_v4     = 'UNSET',
+  String                       $config_template_v4 = 'UNSET',
+  Boolean                      $enable_v6          = true,
+  Boolean                      $manage_conf        = true,
+  Boolean                      $manage_service     = true,
+  Enum['stopped', 'running']   $service_v6_ensure  = 'running',
+  Boolean                      $service_v6_enable  = true,
+  Enum['stopped', 'running']   $service_v4_ensure  = 'running',
+  Boolean                      $service_v4_enable  = true,
+  String                       $daemon_name_v6     = $bird::params::daemon_name_v6,
+  String                       $config_file_v6     = 'UNSET',
+  String                       $config_template_v6 = 'UNSET',
 ) inherits bird::params {
 
-  validate_bool($manage_conf)
-  validate_bool($manage_service)
-
-  validate_bool($enable_v6)
-  validate_bool($service_v6_enable)
-  validate_bool($service_v4_enable)
-
-  validate_re($service_v6_ensure,['^running','^stopped'])
-  validate_re($service_v4_ensure,['^running','^stopped'])
 
   package {
     $daemon_name_v4:
