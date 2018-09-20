@@ -12,6 +12,14 @@
 #   Bird configuration template for IPv4.
 #   Default: UNSET. (this value is a template source, it will be passed into the template() function).
 #
+# [*daemon_user*]
+#   String, The service user name.
+#   Default: $bird::params::daemon_name_v4
+#
+# [*daemon_group*]
+#   String, The service group name.
+#   Default: $bird::params::daemon_name_v4
+#
 # [*daemon_name_v6*]
 #   The service name used by puppet ressource
 #   Default: bird6
@@ -30,6 +38,18 @@
 #
 # [*manage_service*]
 #   Boolean, global parameter to disable or enable mangagment of bird service.
+#   Default: true
+#
+# [*manage_service_file*]
+#   Boolean, global parameter to disable or enable mangagment of bird service unit file.
+#   Default: true
+#
+# [*daemon_service_v4*]
+#   String, global parameter for location of the bird service unit file, IPv4.
+#   Default: true
+#
+# [*daemon_service_v6*]
+#   String, global parameter for location of the bird service unit file, IPv6.
 #   Default: true
 #
 # [*service_v6_ensure*]
@@ -56,6 +76,10 @@
 #   Bird configuration template for IPv6.
 #   Default: UNSET. (this value is a template source, it will be passed into the template() function).
 #
+# [*graceful_restart*]
+#   Boolean, enable graceful restart for supported bird protocols [ kernal and BGP ]
+#   Default: true , but requires manage_conf and manage_service_file to work
+#
 # === Examples
 #
 #  class { 'bird':
@@ -78,9 +102,14 @@ class bird (
   String                       $daemon_name_v4     = $bird::params::daemon_name_v4,
   String                       $config_file_v4     = 'UNSET',
   String                       $config_template_v4 = 'UNSET',
+  String                       $daemon_user        = $bird::params::daemon_user,
+  String                       $daemon_group       = $bird::params::daemon_group,
   Boolean                      $enable_v6          = true,
   Boolean                      $manage_conf        = true,
   Boolean                      $manage_service     = true,
+  Boolean                      $manage_service_file= true,
+  String                       $daemon_service_v4  = $bird::params::daemon_service_v4,
+  String                       $daemon_service_v6  = $bird::params::daemon_service_v6,
   Enum['stopped', 'running']   $service_v6_ensure  = 'running',
   Boolean                      $service_v6_enable  = true,
   Enum['stopped', 'running']   $service_v4_ensure  = 'running',
@@ -88,6 +117,7 @@ class bird (
   String                       $daemon_name_v6     = $bird::params::daemon_name_v6,
   String                       $config_file_v6     = 'UNSET',
   String                       $config_template_v6 = 'UNSET',
+  Boolean                      $graceful_restart   = true,
 ) inherits bird::params {
 
 
@@ -97,6 +127,7 @@ class bird (
   }
 
   if $manage_service == true {
+
     service {
       $daemon_name_v4:
         ensure      => $service_v4_ensure,
@@ -107,6 +138,30 @@ class bird (
         pattern     => $daemon_name_v4,
         require     => Package[$daemon_name_v4];
     }
+
+  }
+
+  if $manage_service_file {
+
+    # Deamon Service #
+    file {
+      $daemon_service_v4:
+        owner   => 'root',
+        group   => 'root',
+        mode    => '0644',
+        content => template("${module_name}/daemon_service_v4.erb"),
+        notify  => Service[$daemon_name_v4],
+        require => Package[$daemon_name_v4],
+    }
+
+    exec {'bird_systemd_reload':
+      command     => '/bin/systemctl daemon-reload',
+      refreshonly => true,
+    }
+
+    # User collector here, as this needs to apply to v6 as well, IF its enabled below #
+    Exec['bird_systemd_reload'] -> Service<| tag == 'bird' |>
+
   }
 
   if $manage_conf == true {
@@ -119,6 +174,35 @@ class bird (
         mode    => '0755',
     }
 
+    # Set any daemon args #
+    if $graceful_restart {
+      $graceful_arg = "-R "
+    } else {
+      $graceful_arg = undef
+    }
+
+   # If any deamon args set, concatinate them together #
+   if $graceful_arg {
+     $daemon_args = "${graceful_arg}"
+   } else {
+     $daemon_args = undef
+   }
+
+    # Deamon Config - this is consumed by v4 and v6 #
+    file {
+      $daemon_config:
+        ensure  => present,
+        owner   => 'root',
+        group   => 'root',
+        mode    => '0644',
+        content => template("${module_name}/daemon_config.erb"),
+        require => Package[$daemon_name_v4],
+    }
+
+    # User collector here, as this needs to apply to v6 as well, IF its enabled below #
+    File[$daemon_config]     ~> Service<| tag == 'bird' |>
+
+    # Bird config #
     if $config_file_v4 == 'UNSET' and $config_template_v4 == 'UNSET' {
       fail("either config_file_v4 or config_template_v4 parameter must be set (config_file_v4: ${config_file_v4}, config_template_v4: ${config_template_v4})")
     } else {
@@ -168,6 +252,22 @@ class bird (
       }
     }
 
+    if $manage_service_file == true {
+
+      # Deamon Service #
+      file {
+        $daemon_service_v6:
+          owner   => 'root',
+          group   => 'root',
+          mode    => '0644',
+          content => template("${module_name}/daemon_service_v6.erb"),
+          notify  => Service[$daemon_name_v6],
+          require => Package[$daemon_name_v6],
+      }
+
+    }
+
+    # Bird config #
     if $manage_conf == true {
       if $config_file_v6 == 'UNSET' and $config_template_v6 == 'UNSET' {
         fail("either config_file_v6 or config_template_v6 parameter must be set (config_file_v6: ${config_file_v6}, config_template_v6: ${config_template_v6})")

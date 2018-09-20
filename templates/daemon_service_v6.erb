@@ -1,0 +1,17 @@
+[Unit]
+Description=BIRD Internet Routing Daemon (IPv6)
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/bird/envvars
+ExecStartPre=/usr/lib/bird/prepare-environment
+ExecStartPre=/usr/sbin/bird6 -p
+ExecReload=/usr/sbin/birdc6 configure
+ExecStart=/usr/sbin/bird6 -f -u $BIRD_RUN_USER -g $BIRD_RUN_GROUP $BIRD_ARGS
+Restart=on-abort
+<% if @graceful_restart -%>
+KillSignal=SIGKILL
+<% end -%>
+
+[Install]
+WantedBy=multi-user.target
