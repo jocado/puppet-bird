@@ -1,0 +1,7 @@
+BIRD_RUN_USER=<%= @daemon_user %>
+BIRD_RUN_GROUP=<%= @daemon_group %>
+<% if @daemon_args -%>
+BIRD_ARGS="<%= @daemon_args %>"
+<% else -%>
+#BIRD_ARGS=
+<% end -%>
