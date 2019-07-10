@@ -231,7 +231,7 @@ class bird (
       } # config_file_v4
 
       exec {'bird4_config_reload':
-        command     => '/bin/systemctl reload bird.service',
+        command     => '/bin/systemctl restart bird.service',
         refreshonly => true,
         tag         => 'bird_config_reload',
       }
@@ -305,7 +305,7 @@ class bird (
         } # config_file_v6
 
         exec {'bird6_config_reload':
-          command     => '/bin/systemctl reload bird6.service',
+          command     => '/bin/systemctl restart bird6.service',
           refreshonly => true,
           tag         => 'bird_config_reload',
         }
